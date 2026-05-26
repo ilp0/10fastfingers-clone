@@ -1,0 +1,12 @@
+.git
+.github
+.claude
+assets
+page.html
+build_html.py
+build_words.py
+README.md
+*.md
+Dockerfile
+.dockerignore
+.gitignore
