@@ -64,11 +64,14 @@ $(document).ready(function () {
 
 function get_local_wordlist() {
 	// Local replacement for POST /speedtests/get_words.
-	// TenFastFingers.WORDS is populated by js/words.js (or by app.js when the language switches).
+	// TenFastFingers.WORDS is populated by js/words.js. The advanced mode swaps the pool
+	// to the top-1000 list (matches the original /advanced-typing-test/<lang> endpoint).
 	var lang = ($("#iso_639_3").text() || "fin").trim();
-	var pool = (window.TenFastFingers && window.TenFastFingers.WORDS && window.TenFastFingers.WORDS[lang])
-		|| (window.TenFastFingers && window.TenFastFingers.WORDS && window.TenFastFingers.WORDS.eng)
-		|| [];
+	var mode = ($("#speedtest_mode").attr("value") || "").trim();
+	var tff = window.TenFastFingers || {};
+	var pool_map = (mode === "advanced") ? (tff.WORDS_1000 || tff.WORDS) : tff.WORDS;
+	pool_map = pool_map || {};
+	var pool = pool_map[lang] || pool_map.eng || [];
 	if (!pool.length) return "";
 	// Build a shuffled list of ~310 words (the original API returns enough words
 	// to fill the 60-second window for very fast typists).
@@ -276,15 +279,15 @@ function count_down() {
 
 function render_local_result() {
 	// Local replacement for POST /speedtests/auswertung.
-	// Compute results the same way the original server did, then inject the same HTML
-	// the server returned (matches the #result-table / #auswertung-result CSS).
+	// Mirrors the markup the original server returned (matches the existing #result-table CSS:
+	// td#wpm strong is 46px green, tr#correct .value is green, tr#wrong .value is red, etc.).
 	var duration_sec = Math.max(1, Math.round((end_time - start_time) / 1000));
 	var tokens = user_input_stream.split(" ").filter(function (w) { return w.length > 0; });
 	var correct = 0, wrong = 0, keystrokes_correct = 0, keystrokes_wrong = 0;
 	for (var i = 0; i < tokens.length; i++) {
 		if (words[i] !== undefined && tokens[i] === words[i]) {
 			correct++;
-			keystrokes_correct += words[i].length + 1; // +1 for space
+			keystrokes_correct += words[i].length + 1; // +1 for the space
 		} else if (words[i] !== undefined) {
 			wrong++;
 			keystrokes_wrong += (tokens[i] ? tokens[i].length : 0) + 1;
@@ -296,18 +299,42 @@ function render_local_result() {
 	var cpm = Math.round(keystrokes_correct * (60 / duration_sec));
 	var accuracy = (correct + wrong) > 0 ? Math.round((correct / (correct + wrong)) * 1000) / 10 : 0;
 
+	// Percentile curve calibrated to public 10ff statistics for the English typing test
+	// (20 wpm ≈ 12th, 40 wpm ≈ 50th, 60 wpm ≈ 80th, 80 wpm ≈ 95th, 100+ ≈ 99th).
+	function percentile(w) {
+		if (w <= 0) return 0;
+		var p = 100 / (1 + Math.exp(-(w - 40) / 13));
+		return Math.max(1, Math.min(99, Math.round(p)));
+	}
+	var better_than = percentile(wpm);
+
 	$("#result-load-indicator").hide();
 
 	var html =
-		'<h3>Tulos <a href="#" onclick="return false;">jaa tulos</a></h3>' +
+		'<h3>Tulos <a href="#" onclick="$(\'#auswertung-share\').slideToggle();return false;">jaa tulos</a></h3>' +
 		'<table id="result-table" style="width:100%;">' +
-		'<tr><td class="name">Sanat/min (WPM)</td><td class="value" id="wpm"><strong>' + wpm + '</strong> <small>WPM</small></td></tr>' +
-		'<tr id="keystrokes"><td class="name">Näppäilyt</td><td class="value"><small>(' + keystrokes_correct + ' | ' + keystrokes_wrong + ')</small> <strong>' + keystrokes_total + '</strong></td></tr>' +
-		'<tr id="correct"><td class="name">Oikeat sanat</td><td class="value"><strong>' + correct + '</strong></td></tr>' +
-		'<tr id="wrong"><td class="name">Väärät sanat</td><td class="value"><strong>' + wrong + '</strong></td></tr>' +
-		'<tr><td class="name">Tarkkuus</td><td class="value"><strong>' + accuracy + '%</strong></td></tr>' +
+			'<tr>' +
+				'<td class="name">Sanat per minuutti</td>' +
+				'<td class="value" id="wpm"><strong>' + wpm + '</strong><small>Words per Minute</small></td>' +
+			'</tr>' +
+			'<tr id="keystrokes">' +
+				'<td class="name">Näppäilyt</td>' +
+				'<td class="value"><small>(' + keystrokes_correct + ' | ' + keystrokes_wrong + ')</small> <strong>' + keystrokes_total + '</strong></td>' +
+			'</tr>' +
+			'<tr id="correct">' +
+				'<td class="name">Oikeita sanoja</td>' +
+				'<td class="value"><strong>' + correct + '</strong></td>' +
+			'</tr>' +
+			'<tr id="wrong">' +
+				'<td class="name">Vääriä sanoja</td>' +
+				'<td class="value"><strong>' + wrong + '</strong></td>' +
+			'</tr>' +
+			'<tr>' +
+				'<td class="name">Tarkkuus</td>' +
+				'<td class="value"><strong>' + accuracy + '%</strong></td>' +
+			'</tr>' +
 		'</table>' +
-		'<p id="textresult">Kirjoitit <strong>' + wpm + ' WPM</strong> (' + cpm + ' CPM).</p>';
+		'<p id="textresult">Olit nopeampi kuin <span id="better-than-percent-value">' + better_than + '%</span> käyttäjistä.</p>';
 
 	$("#auswertung-result").html(html).show();
 }

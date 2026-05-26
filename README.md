@@ -29,11 +29,13 @@ python -m http.server 8765
 ## What's different
 
 - **Word lists**: the original loads words via `POST /speedtests/get_words`, which was never
-  captured by the Wayback Machine. The lists in `js/words.js` are top-200 frequency-ranked words
-  per language, generated from the [hermitdave/FrequencyWords](https://github.com/hermitdave/FrequencyWords)
-  corpus (CC BY-SA 4.0). 44 languages have a 200-word pool bundled; the other 9 (Esperanto,
-  Filipino, Galician, Malagasy, Pashto, Urdu, plus a few less-resourced ones) fall back to English
-  with a notice.
+  captured by the Wayback Machine. The lists in `js/words.js` are frequency-ranked words per
+  language, generated from the [hermitdave/FrequencyWords](https://github.com/hermitdave/FrequencyWords)
+  corpus (CC BY-SA 4.0). Two pools per language are bundled:
+  `WORDS` (top-200, used by the regular typing test) and
+  `WORDS_1000` (top-1000, used by the Advanced typing test).
+  44 languages are covered; the other 9 (Esperanto, Filipino, Galician, Malagasy, Pashto, Urdu,
+  plus a few less-resourced ones) fall back to English with a notice.
 - **Result screen**: the original called `POST /speedtests/auswertung` on the server. The
   standalone build computes the same numbers locally (WPM = correct chars / 5 scaled to 60s, plus
   CPM, accuracy %, keystroke counts). Labels are in Finnish to match the page locale.
@@ -41,11 +43,16 @@ python -m http.server 8765
   recent-activity sidebar feed (relied on external Facebook/Gravatar avatars), and login/signup
   flows. All dead links route to `#`.
 
-## Switching languages
+## Switching languages and modes
 
 Click the green "Finnish ▾" button to expand the in-page language list, or use the top navbar
-"Language: ▾" dropdown. The URL hash routes language changes — `#lang=fin`, `#lang=eng`, etc.,
-also accepts slugs like `#lang=swedish`.
+"Language: ▾" dropdown. The URL hash routes language and mode changes:
+
+- `#lang=fin` — switch to Finnish (also accepts slugs like `#lang=swedish`).
+- `#mode=advanced` — switch to the "Kirjoitustesti (edistynyt)" / Top-1000 pool.
+- `#lang=fin&mode=advanced` — combine.
+
+The sidebar links for "Kirjoitustesti" and "Kirjoitustesti (edistynyt)" route the same way.
 
 ## File layout
 

@@ -74,7 +74,7 @@ FREQ_CODE = {
 
 import urllib.request, sys, re
 
-def fetch_top_words(code, limit=200):
+def fetch_top_words(code, limit=1000):
 	url = f"https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/{code}/{code}_50k.txt"
 	try:
 		req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -133,12 +133,17 @@ out.append("\tfor (var k in window.TenFastFingers.LANGS) m[window.TenFastFingers
 out.append("\treturn m;")
 out.append("})();")
 out.append("")
+def esc(w):
+	return '"' + w.replace('\\', '\\\\').replace('"', '\\"') + '"'
+
 out.append("window.TenFastFingers.WORDS = {};")
+out.append("window.TenFastFingers.WORDS_1000 = {};")
 for iso in sorted(words_by_iso):
-	# JSON-escape each word and emit as compact array literal
-	words = words_by_iso[iso]
-	js_array = "[" + ",".join('"' + w.replace('\\', '\\\\').replace('"', '\\"') + '"' for w in words) + "]"
-	out.append(f"window.TenFastFingers.WORDS[{iso!r}] = {js_array};")
+	full = words_by_iso[iso]
+	top200 = full[:200]
+	top1000 = full  # may be ≤ 1000 for low-resource langs
+	out.append(f"window.TenFastFingers.WORDS[{iso!r}] = [" + ",".join(esc(w) for w in top200) + "];")
+	out.append(f"window.TenFastFingers.WORDS_1000[{iso!r}] = [" + ",".join(esc(w) for w in top1000) + "];")
 
 open('js/words.js', 'w', encoding='utf-8').write("\n".join(out) + "\n")
 print(f"\nDone: {len(words_by_iso)} languages, {sum(len(v) for v in words_by_iso.values())} words total", file=sys.stderr)
