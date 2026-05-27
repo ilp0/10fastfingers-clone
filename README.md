@@ -70,6 +70,6 @@ build_words.py         - regenerates js/words.js from the FrequencyWords corpus
 
 ## Credits
 
-- Original site & design © Christian Buchholz / 10fastfingers.com.
+- Original site & design
 - Word-frequency data: hermitdave/FrequencyWords (CC BY-SA 4.0).
 - Bootstrap 3 (MIT), jQuery (MIT), Font Awesome 4.7 (SIL OFL).
