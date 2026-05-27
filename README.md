@@ -3,8 +3,7 @@
 Standalone HTML/CSS/JS replica of the 10fastfingers.com typing test as it appeared at
 [web.archive.org/web/20250219160745/https://10fastfingers.com/typing-test/finnish](https://web.archive.org/web/20250219160745/https://10fastfingers.com/typing-test/finnish).
 
-Reverse engineered from the wayback snapshot (with the site founder's permission). The original site
-has since been rewritten as a Next.js app; this preserves the look and gameplay of the legacy version.
+Reverse engineered from the wayback snapshot.
 
 ## How to host
 
